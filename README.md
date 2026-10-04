@@ -1,157 +1,105 @@
-# Agapay Capstone Project — Evaluation & Setup Guide
+# Agapay
 
-Welcome to the **Agapay** Capstone Project repository.  
-This guide is designed to be completely beginner-proof so evaluators and panelists can launch, explore, and evaluate the full application in minutes.
+**Agapay** is a capstone project: a platform that connects patients with licensed **physical therapists** for home-based therapy. Patients describe their condition and get matched with therapists, book recurring home sessions under a care contract, chat and share their location in real time during visits, and rate their care. Therapists manage their availability, service areas, contracts and sessions. An admin portal handles therapist license verification, condition curation and platform moderation.
 
----
+| Project | What it is | Stack |
+|---|---|---|
+| [`Agapay/`](Agapay) | Patient & therapist app — Android/iOS via Expo Go, or web browser | Expo SDK 54, React Native 0.81, Expo Router v6, TypeScript |
+| [`agapay-admin/`](agapay-admin) | Admin web portal (verification, reports, account moderation) | Vite 7, React 19, TypeScript, Tailwind |
+| [`agapay-backend/`](agapay-backend) | REST API + SignalR realtime server | .NET 9, ASP.NET Core, EF Core 9, PostgreSQL (Supabase) |
 
-## ☁️ Cloud Architecture Note (Zero Backend Setup Required)
-
-The **Agapay Backend API** and **PostgreSQL Database** are already deployed and actively running live in the cloud:
-* **Live API Backend:** `https://agapay-backend-production.up.railway.app` (Hosted on Railway)
-* **Live Database & Storage:** Supabase (AWS ap-south-1)
-
-> 💡 **What this means for evaluation:**  
-> **You do NOT need to install .NET 9 or run a local backend server to evaluate the project.** Both the **Admin Portal** and the **Mobile App** are pre-configured to connect to the live cloud backend out of the box!
-
----
-
-## ⚙️ 1. Prerequisites (Install Before Running)
-
-To evaluate the frontends, the computer only needs:
-
-| Requirement | Minimum Version | Download Link | Notes |
-| :--- | :--- | :--- | :--- |
-| **Node.js** | **v20.x LTS** (or v18+) | [nodejs.org](https://nodejs.org/) | Required to run Admin and Mobile frontend |
-| **Web Browser** | Any modern browser | Google Chrome / Microsoft Edge | To view the Admin Portal and Mobile Web interface |
-| **Expo Go** *(Optional)* | Latest | Google Play / iOS App Store | Only needed if evaluating mobile on a physical smartphone |
-| **.NET 9.0 SDK** *(Optional)* | .NET 9.0 | [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/9.0) | **Only** required if you specifically wish to compile and run the local C# backend |
-
-> **Quick Verification:** Open Command Prompt or PowerShell and confirm:
-> ```bash
-> node -v
-> ```
-
----
-
-## 🛑 Critical Step Before Running (When Using a CD)
-
-A CD disc is hardware **Read-Only**. Running terminal commands directly inside `D:\` or `E:\` will fail with permission errors.
-
-👉 **Always copy the entire `Capstone` folder from the CD onto your local `Desktop` or `C:\` drive first**, then open your terminals inside the copied folder.
-
----
-
-## ⚡ Quick Reference: Ports & Addresses
-
-| Application | Technology | Default URL / Port | Backend Connection |
-| :--- | :--- | :--- | :--- |
-| **Admin Web Portal** | React + Vite | `http://localhost:5173` | Live Cloud API (Railway) |
-| **Mobile App (Web Mode)** | React Native / Expo | `http://localhost:8081` | Live Cloud API (Railway) |
-| **Backend API (Optional)** | ASP.NET Core 9 | `http://localhost:5211` | Local Swagger at `/swagger` |
-
----
-
-## 🚀 2. Fast-Track Evaluation (Recommended)
-
-> You will need **2 terminal / command prompt windows** open side-by-side:
+## Architecture
 
 ```
-┌──────────────────────────────────────────┐   ┌──────────────────────────────────────────┐
-│           TERMINAL WINDOW 1              │   │           TERMINAL WINDOW 2              │
-│                                          │   │                                          │
-│              agapay-admin                │   │                 Agapay                   │
-│           (Admin Web Portal)             │   │              (Mobile App)                │
-│                                          │   │                                          │
-│        👉 http://localhost:5173          │   │         👉 http://localhost:8081         │
-│     (Connected to Cloud Backend)         │   │      (Connected to Cloud Backend)        │
-└──────────────────────────────────────────┘   └──────────────────────────────────────────┘
+┌────────────────────┐   ┌────────────────────┐
+│   Mobile / Web app │  │   Admin portal     │
+│   (Expo, port 8081)│   │   (Vite, port 5173)│
+└─────────┬──────────┘   └─────────┬──────────┘
+          │  REST + SignalR (JWT)  │
+          ▼                        ▼
+┌─────────────────────────────────────────┐
+│  agapay-backend (.NET 9, port 5211)     │
+│  Controllers → Services → EF Core 9     │
+│  7 SignalR hubs (chat, sessions,        │
+│  contracts, location, notifications, …) │
+└───────────────────┬─────────────────────┘
+                    ▼
+      ┌──────────────────────────────┐
+      │  Supabase: PostgreSQL +      │
+      │  file storage (licenses,     │
+      │  profile photos)             │
+      └──────────────────────────────┘
 ```
 
----
+Key backend design points (see [`agapay-backend/AGENTS.md`](agapay-backend/AGENTS.md)):
 
-### Step 1: Start the Admin Web Portal (Window 1)
+- **Controllers are thin adapters** — business logic lives in domain services under `Services/<Domain>/`. `SessionService` is the single owner of the session lifecycle (booking, cancellation/reschedule state machine, reliever substitution, auto-transitions).
+- **Realtime** via SignalR: all client event names are constants in `SignalREvents`, sends go through `IRealtimeNotifier` so a broadcast failure never fails a committed request.
+- **Error contract**: `ErrorResponseDto { code, message, details }`; a global `ExceptionHandlingMiddleware` turns unhandled exceptions into JSON 500s.
+- Background hosted services handle session auto-transitions (start/end of day, 5 AM Manila reset) and weekly rescheduling of cancelled sessions.
 
-1. Open your **first** terminal window and navigate to `agapay-admin`:
-   ```bash
-   cd agapay-admin
-   ```
-2. Install dependencies (*required since node_modules was omitted from CD*):
-   ```bash
-   npm install
-   ```
-3. Start the portal:
-   ```bash
-   npm run dev
-   ```
-4. Open your browser and navigate to:  
-   👉 **`http://localhost:5173`**  
-   *(The portal connects automatically to the live cloud backend and database).*
+## Quickstart (evaluator / demo)
 
----
+The backend and database run live in the cloud — **no .NET install or local backend needed** to try the frontends. Both frontends are pre-configured to talk to the live API.
 
-### Step 2: Start the Mobile Application (Window 2)
+You need [Node.js 20 LTS](https://nodejs.org/) and two terminals:
 
-1. Open your **second** terminal window and navigate to `Agapay`:
-   ```bash
-   cd Agapay
-   ```
-2. Install dependencies (*required since node_modules was omitted from CD*):
-   ```bash
-   npm install
-   ```
-3. Launch the application:
+**Terminal 1 — admin portal**
 
-   #### 🌐 Option A: In your Web Browser (Fastest — No phone required)
-   ```bash
-   npm run web
-   ```
-   *Your browser will open automatically at **`http://localhost:8081`**.*
+```bash
+cd agapay-admin
+npm install
+npm run dev          # → http://localhost:5173
+```
 
-   #### 📱 Option B: On a Physical Phone via Expo Go
-   1. Install **Expo Go** from Google Play (Android) or App Store (iOS).
-   2. Ensure your phone and PC are connected to the same Wi-Fi.
-   3. Run:
-      ```bash
-      npm start
-      ```
-   4. Scan the QR code printed in the terminal with the Expo Go app.
+**Terminal 2 — mobile app**
 
----
+```bash
+cd Agapay
+npm install
+npm run web          # → http://localhost:8081 (in-browser)
+# or: npm start      # then scan the QR code with the Expo Go app
+```
 
-## 🛠️ 3. Optional: Running the Local C# Backend
+**Demo accounts** — seeded accounts use `@demo.agapay.com` emails and the password `Password123!`:
 
-If the evaluation panel specifically asks to see the backend compiled and running locally on the evaluation PC:
+| Role | Email | Password |
+|---|---|---|
+| Admin (portal) | `admin@demo.agapay.com` | `Password123!` |
+| Patient / Therapist | see [`agapay-backend/SEED_DATA_PLAN.md`](agapay-backend/SEED_DATA_PLAN.md) | `Password123!` |
 
-*Requirement: The PC must have the [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) installed.*
+An internet connection is required (API + database are cloud-hosted).
 
-1. Open a **third** terminal window:
-   ```bash
-   cd agapay-backend/agapay-backend
-   dotnet run
-   ```
-2. Once running, view interactive API documentation at:  
-   👉 **`http://localhost:5211/swagger`**
+## Running the backend locally (developer setup)
 
----
+Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
 
-## 🔑 4. Demo Accounts & Credentials
+```bash
+cd agapay-backend
+dotnet run --project agapay-backend   # http://localhost:5211 (Scalar API docs at /scalar in Development)
+dotnet test                           # xUnit v3 suite (integration + unit, EF InMemory)
+dotnet ef migrations add <Name> --project agapay-backend
+```
 
-Use these credentials to test administrative and platform features:
+Configuration is layered: `appsettings.json` (placeholders) → `appsettings.Development.json` → gitignored `appsettings.Local.json` (optional; template in [`appsettings.Local.json.example`](agapay-backend/agapay-backend/appsettings.Local.json.example)). Put your local Supabase connection string, JWT signing key, Mailjet credentials and seed options there — **never commit real values**. Production runs on [Railway](https://railway.app) with values injected as environment variables.
 
-### 🛡️ Admin Portal (`http://localhost:5173`)
-* **Email:** `admin@demo.agapay.com`
-* **Password:** `Password123!`
+Frontend configuration works the same way: `Agapay/.env` and `agapay-admin/.env` hold public, non-secret values (API URL, Supabase URL/publishable key), and `Agapay/app.config.js` prefers a gitignored `app.development.local.json` overlay when present.
 
----
+## Deployment
 
-## ❓ 5. Frequently Asked Questions & Troubleshooting
+- **API**: Docker container on Railway (`Dockerfile` at repo root), port 8080; `MigrateOnStartup` applies EF migrations on boot.
+- **Database & storage**: Supabase (Postgres + object storage for licenses and profile photos).
+- **Mobile app**: Expo / EAS (`Agapay/app.development.json` holds the EAS project id and public Mapbox token).
 
-### Q: Why do I need to run `npm install`?
-* `node_modules` was excluded from the CD disc to reduce project size from ~1 GB to under 300 MB, fitting comfortably on a standard 700 MB CD and speeding up file copy times.
+## Security notes
 
-### Q: Error: "Address already in use" (Port 5173 or 8081)
-* Another instance is already running. Close any active terminal windows or kill the Node processes via Windows Task Manager.
+- All tracked config files contain **placeholders only**. Real credentials live exclusively in gitignored local files (`appsettings.Local.json`, `app.development.local.json`) or in the host's environment variables.
+- Demo OTP backdoors for `@demo.agapay.com` accounts (fixed OTP, 2FA bypass) are **config-gated** (`Seed:BypassOtpForDemoAccounts`, `Otp:DemoFixedCodeEnabled`, `Auth:DemoEmailBypassEnabled`) and can be disabled in production configuration without a code change.
+- The seeded demo passwords are published here intentionally for evaluation; they apply only to `@demo.agapay.com` demo accounts.
 
-### Q: Does the evaluation computer need internet access?
-* **Yes.** Because the database and backend are securely hosted on the cloud (Supabase & Railway), the evaluation PC requires an active internet connection to load and save data.
+## Documentation
+
+- [`AGENTS.md`](AGENTS.md) — monorepo-wide instructions for AI coding agents
+- [`agapay-backend/AGENTS.md`](agapay-backend/AGENTS.md) — backend architecture & contracts (error shapes, JWT/hub map, JSON casing)
+- [`Agapay/AGENTS.md`](Agapay/AGENTS.md), [`agapay-admin/AGENTS.md`](agapay-admin/AGENTS.md) — frontend conventions
+- [`agapay-backend/SEED_DATA_PLAN.md`](agapay-backend/SEED_DATA_PLAN.md) — demo data seeding
