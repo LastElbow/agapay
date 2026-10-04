@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/agapay_icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": "REDACTED_MAPBOX_SECRET_TOKEN"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "./plugins/withRemovePermissions",
+        [
+          "android.permission.RECORD_AUDIO"
+        ]
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5e318a6e-321b-4012-8a16-def7724bbd49"
+      },
+      "mapboxAccessToken": "YOUR_MAPBOX_PUBLIC_TOKEN"
+    },
+    "owner": "bustedelbow",
+    "updates": {
+      "url": "https://u.expo.dev/5e318a6e-321b-4012-8a16-def7724bbd49"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile menu transitions */
+@layer utilities {
+  .rotate-45 {
+    transform: rotate(45deg);
+  }
+
+  .-rotate-45 {
+    transform: rotate(-45deg);
+  }
+
+  .translate-y-2 {
+    transform: translateY(0.5rem);
+  }
+
+  .-translate-y-2 {
+    transform: translateY(-0.5rem);
+  }
+
+  .opacity-0 {
+    opacity: 0;
+  }
+}
+
+/* Smooth transitions for interactive elements */
+@layer base {
+  * {
+    transition-property: background-color, border-color, color, fill, stroke,
+      opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+}
+
+/* Enhanced schedule block states */
+@layer components {
+  .schedule-block {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .schedule-block-available {
+    @apply bg-blue-500 hover:bg-blue-600 cursor-pointer;
+  }
+
+  .schedule-block-booked {
+    @apply bg-red-500 hover:bg-red-600 cursor-pointer;
+  }
+
+  .schedule-block-completed {
+    @apply bg-green-500 cursor-default opacity-75;
+  }
+
+  .schedule-block-cancelled {
+    @apply bg-gray-400 cursor-default opacity-60;
+  }
+}

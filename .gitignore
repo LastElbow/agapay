@@ -1,0 +1,55 @@
+# ==========================================
+# Capstone Monorepo Git Ignore Rules
+# ==========================================
+
+# Exclude local git backup folders
+**/.git_backup*/
+
+# ------------------------------------------
+# Environment & Secrets (Plug 'n' Play for Evaluation)
+# ------------------------------------------
+# Note: Root secrets (.env & appsettings.Development.json) are included for CD evaluation.
+*.local
+*.local.*
+Agapay/.env.local
+agapay-admin/.env.local
+agapay-backend/**/appsettings.Local.json
+agapay-backend/**/*.csx
+
+# ------------------------------------------
+# Node / Expo Dependencies & Build Outputs
+# ------------------------------------------
+**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+expo-env.d.ts
+*.tsbuildinfo
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# ------------------------------------------
+# .NET Build Outputs & Caches
+# ------------------------------------------
+**/[Bb]in/
+**/[Oo]bj/
+**/.vs/
+**/.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# ------------------------------------------
+# OS Metadata
+# ------------------------------------------
+.DS_Store
+Thumbs.db
+
+# Capstone internal docs
+DPIA_*
+PDIM_*
+RA_*
+plan-*
