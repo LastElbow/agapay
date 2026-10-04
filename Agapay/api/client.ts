@@ -12,7 +12,9 @@ import { compute429RetryDelayMs } from '@/src/features/http/core/retryBackoff';
 
 // IMPORTANT: Set your API base URL. For local development, this points to your running backend.
 // If you're testing on a device, replace with your ngrok URL.
-const BASE_URL = 'https://agapay-backend-production.up.railway.app/';
+// Override with EXPO_PUBLIC_API_URL (e.g. http://localhost:5211 for local-backend testing)
+// without editing this file; the production URL remains the default.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://agapay-backend-production.up.railway.app/';
 
 // Suspension event emitter for app-wide handling
 type SuspensionDetails = {

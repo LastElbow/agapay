@@ -1,3 +1,4 @@
+using agapay_backend.Data;
 using agapay_backend.Hubs;
 using agapay_backend.Middleware;
 using agapay_backend.Startup;
@@ -46,6 +47,13 @@ if (!app.Environment.IsEnvironment("Testing"))
 {
   await AgapayStartupTasks.RunDatabaseStartupAsync(app);
 }
+else if (app.Configuration.GetValue<bool>("Seed:Enabled"))
+{
+  // Test-only hook: seed the InMemory database (demo accounts, contracts, sessions)
+  // so locally-run contract/E2E testing has realistic data. Production is unaffected.
+  using var seedScope = app.Services.CreateScope();
+  await SeedData.Initialize(seedScope.ServiceProvider);
+}
 
 app.UseHttpsRedirection();
 
@@ -54,7 +62,12 @@ app.UseResponseCompression();
 // CORS
 app.UseCors("AllowReactApp");
 
-app.UseRateLimiter();
+// Rate limiting is skipped in the Testing environment: the global 100 req/min/IP
+// limit would 429 automated contract-test suites sharing the loopback IP.
+if (!app.Environment.IsEnvironment("Testing"))
+{
+  app.UseRateLimiter();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -69,6 +69,7 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 
 ## Gotchas
 
+0. **Interop testing** — see root `TESTING.md` for the full runbook (disposable Testing-env local backend, 75 wire-contract tests in `agapay-backend.Tests/*ContractTests.cs`, Node E2E scripts, manual UI checklists) and the documented pre-existing bugs (suspension-status route/allow-list mismatch, hub query-token gap for notifications/ratings). The rate limiter is skipped in Testing env, and `Seed:Enabled=true` + `Seed:AdminUser=true` seed the InMemory DB at startup (test-only hooks in `Program.cs`).
 1. **Session status has ONE writer:** `Services/Sessions/SessionService.cs`. All transitions — create, cancel (+reschedule-proposal state machine), reschedule approval, reliever swap, start/complete (Contracts routes delegate to it), and the 5 AM DoneForToday reset used by both background services — go through it. Add new transitions there, not in controllers.
 2. **Error-contract shapes were audited and intentionally NOT unified** — e.g., ModerationController's report-status endpoint deliberately differs from Admin's (validation, reviewer parsing, response fields). Match the endpoint you're editing.
 3. `AuthController`'s `UserType` string is computed differently per endpoint (some include the "User" base role, some filter it case-sensitively) — this is preserved, not a bug to fix casually.
