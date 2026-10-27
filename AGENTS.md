@@ -50,4 +50,4 @@ Issues live in GitHub Issues for `LastElbow/agapay` (via `gh -R LastElbow/agapay
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `docs/adr/` at the repo root; a `CONTEXT.md` glossary is planned but does not exist yet. See `docs/agents/domain.md`.

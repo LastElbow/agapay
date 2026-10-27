@@ -48,9 +48,9 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 
 ## Contracts the frontends depend on (do not change unilaterally)
 
-- **Errors:** base shape and suspension 403 are in `../AGENTS.md` (cross-cutting rule 2); match the endpoint's existing shape. Unhandled exceptions return `{ code: "INTERNAL_ERROR", ... }` 500 via ExceptionHandlingMiddleware. Model-binding failures return `{ code: "VALIDATION_ERROR", message, details }` 400 (InvalidModelStateResponseFactory in Startup/).
+- **Errors:** base shape and suspension 403 are in `../AGENTS.md` ("Error contract" in the root cross-cutting rules); match the endpoint's existing shape. Unhandled exceptions return `{ code: "INTERNAL_ERROR", ... }` 500 via ExceptionHandlingMiddleware. Model-binding failures return `{ code: "VALIDATION_ERROR", message, details }` 400 (InvalidModelStateResponseFactory in Startup/).
 - **Suspension:** emitted by `Middleware/SuspensionCheckMiddleware.cs` (which also auto-lifts expired suspensions and allow-lists `/api/auth/logout|refresh|me`, `/api/users/suspension-status`, notifications paths).
-- **JSON casing and roles:** see `../AGENTS.md` (rules 3–4). Serializer setup is in `Startup/AgapayServiceCollectionExtensions.cs → AddAgapayApiDefaults`; don't add `[JsonPropertyName]` selectively. Roles are seeded in `Data/SeedData.cs`.
+- **JSON casing and roles:** see the "Role names" and "JSON casing" rules in `../AGENTS.md`. Serializer setup is in `Startup/AgapayServiceCollectionExtensions.cs → AddAgapayApiDefaults`; don't add `[JsonPropertyName]` selectively. Roles are seeded in `Data/SeedData.cs`.
 - **JWT for SignalR:** access token read from `access_token` query string in `OnMessageReceived` — currently covers only 5 of 7 hub paths (ratings & notifications omitted) in `Startup/AgapayServiceCollectionExtensions.cs`. If you touch hub auth, know this map first.
 - **SignalR events:** all client event names are constants in `Services/Notifications/SignalREvents.cs` — use them, never raw strings. Sends go through `IRealtimeNotifier` (swallows + logs hub failures so a broadcast error never fails a committed DB write).
 - **CORS policy `"AllowReactApp"`** is defined in code (`AddAgapayCors`), not in config files.
@@ -74,7 +74,7 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 3. `AuthController`'s `UserType` string is computed differently per endpoint (some include the "User" base role, some filter it case-sensitively) — this is preserved, not a bug to fix casually.
 4. **Indentation mixes 2-space and 4-space between files** (no .editorconfig). Match the file you're editing.
 5. Migration names mix PascalCase and camelCase — either is fine; don't rename existing ones.
-6. Hosting is Railway (`Dockerfile` in this folder); there is no CI workflow in the repo.
+6. Hosting is Railway (`agapay-backend/Dockerfile`); there is no CI workflow in the repo.
 7. `IRateLimiter` (InMemoryRateLimiter) is the only singleton app service; it self-sweeps idle keys.
 8. `agapay-backend.http` has real endpoint examples with placeholders (no credentials).
 9. Known follow-ups (documented, not yet fixed): patient PII in chat payloads / `Clients.All` location & rating broadcasts (need frontend listener audit), `SuspensionCheckMiddleware` hits the DB on every authenticated request (cacheable), legacy Register/RegisterPatient/RegisterTherapist flows duplicate signup logic (kept separate — behavior differs).
