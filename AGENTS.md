@@ -10,13 +10,13 @@ Instructions for AI coding agents working in this repository. Each subproject ha
 | `agapay-admin/` | Admin web portal (therapist verification, condition curation, reports) | Vite 7, React 19, TypeScript, Tailwind |
 | `agapay-backend/` | REST API + SignalR realtime server | .NET 9, ASP.NET Core, EF Core 9, PostgreSQL (Supabase) |
 
-Single git repo rooted here. `Capstone.sln` groups both backend projects; each subproject also builds independently.
+Single git repo rooted here (rationale: `docs/adr/0001-monorepo-with-fixed-project-folders.md`). `Capstone.sln` wraps only the two backend projects (`agapay-backend`, `agapay-backend.Tests`); the frontends are not in it. The backend also has its own `agapay-backend/agapay-backend.sln`.
 
 ## Deployment reality
 
 - The backend and database run live in the cloud: API at `https://agapay-backend-production.up.railway.app` (Railway), Postgres + file storage on Supabase.
 - **Both frontends default to the production URL** (hardcoded fallback in `Agapay/api/client.ts` and `agapay-admin/src/api/apiClient.ts`). Local backend runs at `http://localhost:5211` if you start it yourself.
-- Root `README.md` is an evaluator-facing setup guide (cloud-first, no local backend required).
+- The `Dockerfile` for the Railway deploy lives in `agapay-backend/`. Root `README.md` is an evaluator-facing setup guide (cloud-first, no local backend required).
 
 ## Commands
 
@@ -41,4 +41,13 @@ The admin app has **no test suite**; its only gates are `npm run build` (runs `t
 5. **API path casing is inconsistent but intentional**: most controllers use `api/[controller]` (→ `/Admin/...`), except `AdminConditionsController` → `/api/admin/conditions`. Preserve whatever a given service file already uses.
 6. **Match the surrounding file's style** (quotes, semicolons, indentation, inline-vs-sheet styling). Several projects have mixed formatting and no formatter config; do not reformat or "modernize" whole files — it produces unreviewable diffs.
 7. **SignalR hub URLs** are `/hubs/{name}` for chat, contracts, sessions, ratings, colleagues, notifications and `/locationhub` (no prefix) for location. Clients depend on this.
-8. Docs in the root (`DPIA_*.md`, `RA_*.md`, `PDIM_*.md`) are thesis privacy/risk documents, not code documentation — don't treat them as specs.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `LastElbow/agapay` (via `gh -R LastElbow/agapay`). See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

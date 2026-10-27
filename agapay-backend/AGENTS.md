@@ -1,6 +1,6 @@
 # AGENTS.md — agapay-backend (API server)
 
-.NET 9 ASP.NET Core Web API: REST + SignalR, EF Core 9 with Npgsql (PostgreSQL hosted on Supabase), ASP.NET Identity + JWT bearer auth, Scalar API docs in Dev. Deployed to Railway via the root `Dockerfile` (port 8080). Monorepo rules: see `../AGENTS.md`.
+.NET 9 ASP.NET Core Web API: REST + SignalR, EF Core 9 with Npgsql (PostgreSQL hosted on Supabase), ASP.NET Identity + JWT bearer auth, Scalar API docs in Dev. Deployed to Railway via `agapay-backend/Dockerfile` (port 8080). Monorepo rules: see `../AGENTS.md`.
 
 > **2026-10 refactor:** the backend was restructured from "logic-inline controllers" to a service-layer architecture. Controllers are now thin adapters; business logic lives in `Services/<Domain>/`. The section below reflects the NEW structure.
 
@@ -48,10 +48,9 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 
 ## Contracts the frontends depend on (do not change unilaterally)
 
-- **Errors:** `ErrorResponseDto { code, message, details }` (camelCase) or ad-hoc anonymous objects — match the endpoint's existing shape. Unhandled exceptions return `{ code: "INTERNAL_ERROR", ... }` 500 via ExceptionHandlingMiddleware. Model-binding failures return `{ code: "VALIDATION_ERROR", message, details }` 400 (InvalidModelStateResponseFactory in Startup/).
-- **Suspension:** 403 with `{ error: "AccountSuspended" | "AccountBanned", message, suspensionDetails }` from `Middleware/SuspensionCheckMiddleware.cs` (which also auto-lifts expired suspensions and allow-lists `/api/auth/logout|refresh|me`, `/api/users/suspension-status`, notifications paths).
-- **JSON:** camelCase globally with **string enums** (`Startup/AgapayServiceCollectionExtensions.cs → AddAgapayApiDefaults`). C# DTO properties stay PascalCase; don't add `[JsonPropertyName]` selectively.
-- **Roles:** `"Admin"`, `"User"`, `"Patient"`, `"PhysicalTherapist"` (never "Therapist") — seeded in `Data/SeedData.cs`.
+- **Errors:** base shape and suspension 403 are in `../AGENTS.md` (cross-cutting rule 2); match the endpoint's existing shape. Unhandled exceptions return `{ code: "INTERNAL_ERROR", ... }` 500 via ExceptionHandlingMiddleware. Model-binding failures return `{ code: "VALIDATION_ERROR", message, details }` 400 (InvalidModelStateResponseFactory in Startup/).
+- **Suspension:** emitted by `Middleware/SuspensionCheckMiddleware.cs` (which also auto-lifts expired suspensions and allow-lists `/api/auth/logout|refresh|me`, `/api/users/suspension-status`, notifications paths).
+- **JSON casing and roles:** see `../AGENTS.md` (rules 3–4). Serializer setup is in `Startup/AgapayServiceCollectionExtensions.cs → AddAgapayApiDefaults`; don't add `[JsonPropertyName]` selectively. Roles are seeded in `Data/SeedData.cs`.
 - **JWT for SignalR:** access token read from `access_token` query string in `OnMessageReceived` — currently covers only 5 of 7 hub paths (ratings & notifications omitted) in `Startup/AgapayServiceCollectionExtensions.cs`. If you touch hub auth, know this map first.
 - **SignalR events:** all client event names are constants in `Services/Notifications/SignalREvents.cs` — use them, never raw strings. Sends go through `IRealtimeNotifier` (swallows + logs hub failures so a broadcast error never fails a committed DB write).
 - **CORS policy `"AllowReactApp"`** is defined in code (`AddAgapayCors`), not in config files.
@@ -65,7 +64,7 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 - Local overrides: `agapay-backend/appsettings.Local.json` (gitignored) — template in `appsettings.Local.json.example`. `Program.cs` loads it optionally.
 - `appsettings.Development.json` and `appsettings.json` are **placeholder skeletons** (real credentials were purged from git in the 2026-10 refactor — the previously committed values must be ROTATED). Production values come from Railway environment variables; local dev values go in `appsettings.Local.json`.
 - Demo backdoors are config-gated (defaults preserve demo behavior): `Seed:BypassOtpForDemoAccounts` + `Otp:DemoFixedCodeEnabled` (fixed OTP "123456") and `Auth:DemoEmailBypassEnabled` (@demo.agapay.com skips 2FA login OTP). Set them false in production config to require real OTP.
-- Seeded demo accounts use password `Password123!` (see `SEED_DATA_PLAN.md`).
+- Seeded demo accounts use password `Password123!` (see `docs/SEED_DATA_PLAN.md`).
 
 ## Gotchas
 
@@ -75,7 +74,7 @@ Service pattern: scoped, ctor-injected deps, methods end in `Async`, take `Claim
 3. `AuthController`'s `UserType` string is computed differently per endpoint (some include the "User" base role, some filter it case-sensitively) — this is preserved, not a bug to fix casually.
 4. **Indentation mixes 2-space and 4-space between files** (no .editorconfig). Match the file you're editing.
 5. Migration names mix PascalCase and camelCase — either is fine; don't rename existing ones.
-6. The Azure Web App workflow in `.github/workflows/` is historical; actual hosting is Railway (root `Dockerfile`).
+6. Hosting is Railway (`Dockerfile` in this folder); there is no CI workflow in the repo.
 7. `IRateLimiter` (InMemoryRateLimiter) is the only singleton app service; it self-sweeps idle keys.
 8. `agapay-backend.http` has real endpoint examples with placeholders (no credentials).
 9. Known follow-ups (documented, not yet fixed): patient PII in chat payloads / `Clients.All` location & rating broadcasts (need frontend listener audit), `SuspensionCheckMiddleware` hits the DB on every authenticated request (cacheable), legacy Register/RegisterPatient/RegisterTherapist flows duplicate signup logic (kept separate — behavior differs).

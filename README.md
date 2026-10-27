@@ -66,7 +66,7 @@ npm run web          # → http://localhost:8081 (in-browser)
 | Role | Email | Password |
 |---|---|---|
 | Admin (portal) | `admin@demo.agapay.com` | `Password123!` |
-| Patient / Therapist | see [`agapay-backend/SEED_DATA_PLAN.md`](agapay-backend/SEED_DATA_PLAN.md) | `Password123!` |
+| Patient / Therapist | see [`agapay-backend/docs/SEED_DATA_PLAN.md`](agapay-backend/docs/SEED_DATA_PLAN.md) | `Password123!` |
 
 An internet connection is required (API + database are cloud-hosted).
 
@@ -87,7 +87,7 @@ Frontend configuration works the same way: `Agapay/.env` and `agapay-admin/.env`
 
 ## Deployment
 
-- **API**: Docker container on Railway (`Dockerfile` at repo root), port 8080; `MigrateOnStartup` applies EF migrations on boot.
+- **API**: Docker container on Railway (`agapay-backend/Dockerfile`), port 8080; `MigrateOnStartup` applies EF migrations on boot.
 - **Database & storage**: Supabase (Postgres + object storage for licenses and profile photos).
 - **Mobile app**: Expo / EAS (`Agapay/app.development.json` holds the EAS project id and public Mapbox token).
 
@@ -102,4 +102,4 @@ Frontend configuration works the same way: `Agapay/.env` and `agapay-admin/.env`
 - [`AGENTS.md`](AGENTS.md) — monorepo-wide instructions for AI coding agents
 - [`agapay-backend/AGENTS.md`](agapay-backend/AGENTS.md) — backend architecture & contracts (error shapes, JWT/hub map, JSON casing)
 - [`Agapay/AGENTS.md`](Agapay/AGENTS.md), [`agapay-admin/AGENTS.md`](agapay-admin/AGENTS.md) — frontend conventions
-- [`agapay-backend/SEED_DATA_PLAN.md`](agapay-backend/SEED_DATA_PLAN.md) — demo data seeding
+- [`agapay-backend/docs/SEED_DATA_PLAN.md`](agapay-backend/docs/SEED_DATA_PLAN.md) — demo data seeding
