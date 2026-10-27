@@ -60,6 +60,10 @@ _Avoid_: Suggestion, search result
 The agreement between one patient and one therapist for a course of recurring home sessions. Moves from Draft through Pending Confirmation to Active, then ends Completed, Cancelled, Expired or Terminated.
 _Avoid_: Booking, subscription, plan
 
+**Blueprint**:
+The terms of a contract (schedule and care details) that the therapist sets and sends to the patient; the contract becomes Active when the patient confirms it.
+_Avoid_: Proposal, quote
+
 **Session**:
 A single scheduled home visit under a contract. Its status is owned by one state machine (e.g. Scheduled, In Progress, Completed, Done For Today, Cancelled, and the pending states for cancellation, reliever acceptance and reschedule approval).
 _Avoid_: Appointment, visit
